@@ -1,0 +1,150 @@
+class Pomodoro extends React.Component {
+  constructor(props){
+    super(props);
+    this.state = {
+      session: 25,
+      break: 5,
+      go: 1500,
+      paused: 'yes',
+      selector: 'Session'
+    };
+    this.sDec = this.sDec.bind(this);
+    this.sInc = this.sInc.bind(this);
+    this.bDec = this.bDec.bind(this);
+    this.bInc = this.bInc.bind(this);
+    this.reset = this.reset.bind(this);
+    this.clock = this.clock.bind(this);
+    this.pausePlay = this.pausePlay.bind(this);
+    this.action = this.action.bind(this);
+    this.run = this.run.bind(this);
+    this.twoFer = this.twoFer.bind(this);
+  }
+  sDec(){
+    if(this.state.session > 1){
+    this.setState({
+      session: this.state.session - 1,
+      go: (this.state.session - 1) * 60
+    });}
+  }
+  sInc(){
+    if(this.state.session < 60){
+    this.setState({
+      session: this.state.session + 1,
+      go: (this.state.session + 1) * 60
+    });}
+  }
+  bDec(){
+    if(this.state.break > 1) {
+    this.setState({
+      break: this.state.break - 1
+    });}
+  }
+  bInc(){
+    if(this.state.break < 60){
+     this.setState({
+      break: this.state.break + 1
+    });}
+  }
+  reset(){
+    this.setState({
+      session: 25,
+      break: 5,
+      go: 1500,
+      paused: 'yes',
+      selector: 'Session'
+    });
+    this.audioBeep.pause();
+    this.audioBeep.currentTime = 0;
+  }
+  
+  pausePlay(){
+    if(this.state.paused == 'yes'){
+      this.setState({
+        paused: 'no'
+      });
+    } else {
+      this.setState({
+        paused: 'yes'
+      });
+    }
+  }
+   run(){
+     if(this.state.paused == 'no' && this.state.go > 0){
+    this.setState({
+      go: this.state.go - 1
+    });}
+     else if(this.state.go == 0 && this.state.selector == 'Session') {
+       this.audioBeep.play();
+       this.setState({
+         go: (this.state.break * 60) + 1,
+         selector: 'Break'
+       }),
+         this.run();
+     }
+     else if(this.state.go == 0 && this.state.selector == 'Break'){
+       this.audioBeep.play();
+       this.setState({
+         go: (this.state.session * 60) + 1,
+         selector: 'Session'
+       }),
+         this.run();
+     }
+  }
+  
+  action(){
+    if(this.state.go > 0){
+      accurateInterval(this.run, 1000);}
+    }
+  twoFer(){
+    this.pausePlay();
+    this.action();
+  }
+  clock(){
+    let min = Math.floor(this.state.go / 60);
+    let sec = this.state.go - min * 60;
+    sec = sec < 10 ? '0' + sec : sec;
+    min = min < 10 ? '0' + min : min;
+    return min + ':' + sec;
+  }
+  render(){
+    return(
+    <div id="root" className="container-fluid">
+        <h1 id="h1">Pomodoro Clock Timer</h1>
+        <div className="row">
+          <div className="col-4 border border-primary">
+            <h2 className="h2" id="session-label">Session Length</h2>
+            <div className="row">
+              <div className="col-3 fa fa-arrow-down" id="session-decrement" onClick={this.sDec}></div>
+              <div className="col-6 border border-dark" id="session-length">{this.state.session}</div>
+              <div className="col-3 fa fa-arrow-up" id="session-increment" onClick={this.sInc}></div>
+            </div>
+          </div>
+          <div className="col-4 border border-primary"> 
+            <h2 className="h2" id="break-label">Break Length</h2>
+            <div className="row">
+              <div className="col-3  fa fa-arrow-down" id="break-decrement" onClick={this.bDec}></div>
+              <div className="col-6 border border-dark" id="break-length">{this.state.break}</div>
+              <div className="col-3 fa fa-arrow-up" id="break-increment" onClick={this.bInc}></div>
+            </div>
+          </div>
+          <div className="col-4 border border-primary"> 
+            <h2 className="h2" id="timer-label">{this.state.selector}</h2>
+            <div className="row">
+              <div className="controls col-3 fas fa-play" id="start_stop" onClick={this.twoFer}></div>
+              <div className="col-6 border border-dark" id="time-left">{this.clock()}</div>
+              <div className="controls col-3 fas fa-trash" id="reset" onClick={this.reset}></div>
+            </div>
+          </div>
+        </div>
+        <audio id="beep"
+          preload="auto"
+          src="https://www.pacdv.com/sounds/interface_sound_effects/beep-7.wav"
+        ref={(audio) => {
+            this.audioBeep = audio;
+          }} 
+          />
+        </div>
+    );
+  }
+}
+ReactDOM.render(<Pomodoro />, document.getElementById('root'))
